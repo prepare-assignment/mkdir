@@ -1,0 +1,16 @@
+id: "mkdir"
+name: "Make directory"
+description: "Make a directory"
+inputs:
+  directory:
+    description: The directory to create
+    type: string
+    required: true
+  parents:
+    description: "Make parent directories if needed"
+    required: false
+    type: boolean
+    default: false
+runs:
+  using: "python"
+  main: "mkdir/main.py"
