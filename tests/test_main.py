@@ -66,10 +66,24 @@ def test_parents(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerF
 def test_missing_parent(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     """Without 'parents' only the last part of the path is created, like 'mkdir' without '-p'"""
     set_inputs(monkeypatch, directory="out/images/icons")
-    failed = mocker.patch("prepare_mkdir.main.set_failed")
-    main()
-    failed.assert_called_once()
+    failed = mocker.spy(mkdir_main, "set_failed")
+    with pytest.raises(SystemExit):
+        main()
+    assert failed.call_args.args[0] == ("Cannot create 'out/images/icons': 'out/images' doesn't exist, "
+                                        "set 'parents' to create the parent directories")
     assert not (project / "out" / "images").exists()
+
+
+def test_missing_parent_outside_working_directory(project: Path, monkeypatch: pytest.MonkeyPatch,
+                                                  mocker: MockerFixture) -> None:
+    """An allowed path outside the working directory is named in full, it has no relative form"""
+    outside = (project.parent / "outside").as_posix()
+    set_inputs(monkeypatch, directory=f"{outside}/images", allow_outside_working_directory=True)
+    failed = mocker.spy(mkdir_main, "set_failed")
+    with pytest.raises(SystemExit):
+        main()
+    assert failed.call_args.args[0] == (f"Cannot create '{outside}/images': '{outside}' doesn't exist, "
+                                        f"set 'parents' to create the parent directories")
 
 
 def test_existing_directory(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
