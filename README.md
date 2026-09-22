@@ -26,7 +26,14 @@ parents:
   required: false
   type: boolean
   default: false
+allow-outside-working-directory:
+  description: The directory can be outside the working directory
+  required: false
+  type: boolean
+  default: false
 ```
+
+The directory is created relative to the working directory. A directory outside it (e.g. `../out`, or an absolute path elsewhere) fails, unless `allow-outside-working-directory` is set.
 
 ## Releases
 
