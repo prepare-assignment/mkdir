@@ -6,6 +6,7 @@ import pytest
 import yaml
 from pytest_mock import MockerFixture
 
+import prepare_mkdir.main as mkdir_main
 from prepare_mkdir.main import main
 
 TASK = Path(__file__).parent.parent / "task.yml"
@@ -94,3 +95,27 @@ def test_absolute_path(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: M
     main()
     failed.assert_not_called()
     assert (project / "out" / "images").is_dir()
+
+
+@pytest.mark.parametrize("directory", ["..", "../outside", "out/../../outside", "ABSOLUTE"])
+def test_outside_working_directory_fails(directory: str, project: Path, monkeypatch: pytest.MonkeyPatch,
+                                         mocker: MockerFixture) -> None:
+    """The task used to create any directory, also next to or outside the project"""
+    if directory == "ABSOLUTE":
+        directory = (project.parent / "outside").as_posix()
+    set_inputs(monkeypatch, directory=directory, parents=True)
+    failed = mocker.spy(mkdir_main, "set_failed")
+    with pytest.raises(SystemExit):
+        main()
+    assert failed.call_args.args[0] == (f"The directory '{directory}' is outside the working directory, set "
+                                        f"'allow-outside-working-directory' to allow this")
+    assert not (project.parent / "outside").exists()
+
+
+def test_outside_working_directory_allowed(project: Path, monkeypatch: pytest.MonkeyPatch,
+                                           mocker: MockerFixture) -> None:
+    set_inputs(monkeypatch, directory="../outside", allow_outside_working_directory=True)
+    failed = mocker.patch("prepare_mkdir.main.set_failed")
+    main()
+    failed.assert_not_called()
+    assert (project.parent / "outside").is_dir()
