@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pytest_mock import MockerFixture
 
-from mkdir.main import main
+from prepare_mkdir.main import main
 
 
 def set_environment(directory: str, parents: bool = False) -> None:
@@ -37,6 +37,6 @@ def test_absolute(tmp_path: Path) -> None:
 def test_parents_not_set(tmp_path: Path, mocker: MockerFixture) -> None:
     directory = os.path.join(tmp_path, "out/images")
     set_environment(directory)
-    spy = mocker.patch("mkdir.main.set_failed")
+    spy = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     spy.assert_called_once()
