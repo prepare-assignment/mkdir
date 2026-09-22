@@ -1,5 +1,5 @@
 [project]
-name = "mkdir"
+name = "prepare-mkdir"
 version = "0.1.0"
 description = "Make a directory"
 authors = [{ name = "Bonajo", email = "m.bonajo@fontys.nl" }]

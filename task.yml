@@ -13,4 +13,4 @@ inputs:
     default: false
 runs:
   using: "python"
-  main: "mkdir/main.py"
+  main: "prepare_mkdir/main.py"
