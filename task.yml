@@ -16,6 +16,10 @@ inputs:
     required: false
     type: boolean
     default: false
+outputs:
+  directory:
+    description: The directory that has been created
+    type: string
 runs:
   using: "python"
   main: "prepare_mkdir/main.py"

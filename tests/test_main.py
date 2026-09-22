@@ -38,29 +38,41 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
+def created(set_output: Any) -> str:
+    """The directory output, as is: paths use '/' on every platform (they are used in other steps)"""
+    set_output.assert_called_once()
+    return str(set_output.call_args.args[1])
+
+
 def test_create(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     set_inputs(monkeypatch, directory="assignment")
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project / "assignment").is_dir()
+    assert created(set_output) == "assignment"
 
 
 def test_create_in_existing_directory(project: Path, monkeypatch: pytest.MonkeyPatch,
                                       mocker: MockerFixture) -> None:
     set_inputs(monkeypatch, directory="out/images")
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project / "out" / "images").is_dir()
+    assert created(set_output) == "out/images"
 
 
 def test_parents(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     set_inputs(monkeypatch, directory="out/images/icons", parents=True)
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project / "out" / "images" / "icons").is_dir()
+    assert created(set_output) == "out/images/icons"
 
 
 def test_missing_parent(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
@@ -89,10 +101,12 @@ def test_missing_parent_outside_working_directory(project: Path, monkeypatch: py
 def test_existing_directory(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     """An existing directory is not an error: the task can run again without failing"""
     set_inputs(monkeypatch, directory="out")
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project / "out").is_dir()
+    assert created(set_output) == "out"
 
 
 def test_existing_file(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
@@ -104,11 +118,14 @@ def test_existing_file(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: M
 
 
 def test_absolute_path(project: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
+    """An absolute path inside the working directory is output relative to it, like the other tasks"""
     set_inputs(monkeypatch, directory=str(project / "out" / "images"))
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project / "out" / "images").is_dir()
+    assert created(set_output) == "out/images"
 
 
 @pytest.mark.parametrize("directory", ["..", "../outside", "out/../../outside", "ABSOLUTE"])
@@ -129,7 +146,10 @@ def test_outside_working_directory_fails(directory: str, project: Path, monkeypa
 def test_outside_working_directory_allowed(project: Path, monkeypatch: pytest.MonkeyPatch,
                                            mocker: MockerFixture) -> None:
     set_inputs(monkeypatch, directory="../outside", allow_outside_working_directory=True)
+    set_output = mocker.patch("prepare_mkdir.main.set_output")
     failed = mocker.patch("prepare_mkdir.main.set_failed")
     main()
     failed.assert_not_called()
     assert (project.parent / "outside").is_dir()
+    # A directory outside the working directory has no relative form
+    assert created(set_output) == (project.parent / "outside").as_posix()

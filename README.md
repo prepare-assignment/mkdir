@@ -35,6 +35,31 @@ allow-outside-working-directory:
 
 The directory is created relative to the working directory. A directory outside it (e.g. `../out`, or an absolute path elsewhere) fails, unless `allow-outside-working-directory` is set.
 
+## Outputs
+
+The following outputs are available:
+
+```yaml
+directory:
+  description: The directory that has been created
+  type: string
+```
+
+- `directory`: the created directory, relative to the working directory and always with `/` (also on Windows), so other steps can use it:
+
+```yml
+- name: Create image dir
+  id: images
+  uses: mkdir
+  with:
+    directory: out/images
+- name: Copy images
+  uses: copy
+  with:
+    source: src/*.png
+    destination: ${{ steps.images.outputs.directory }}
+```
+
 ## Releases
 
 Releases are automated with [semantic-release](https://semantic-release.gitbook.io/). Pull requests are squash merged, so the PR title becomes the commit on `main` and must follow [Conventional Commits](https://www.conventionalcommits.org/) (checked on every PR):

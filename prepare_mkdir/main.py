@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from prepare_toolbox.core import get_input, set_failed
+from prepare_toolbox.core import get_input, set_failed, set_output
 
 
 def __display(path: Path) -> str:
@@ -28,6 +28,8 @@ def main() -> None:
             missing = next(parent for parent in reversed(path.parents) if not parent.exists())
             set_failed(f"Cannot create '{Path(directory).as_posix()}': '{__display(missing)}' doesn't exist, "
                        f"set 'parents' to create the parent directories")
+        # The path as other steps can use it, always with '/' (also on Windows)
+        set_output("directory", __display(path))
     except Exception as e:
         set_failed(e)
 
